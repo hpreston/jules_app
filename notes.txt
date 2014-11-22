@@ -1,0 +1,16 @@
+Milestones...
+
+I   Register a sensor to the database
+    - include current state and pertinent info
+
+II  Set desired state in database and have sensor update
+    - will include having sensor periodically polling app
+
+III Create API on sensor for on-demand state changing
+
+IV  Create Local Gateway to Display Sensors and State
+
+
+
+Things to work out...
+todo - Figure out new sensor registration to account/site...
