@@ -41,12 +41,33 @@ class mysqldb(object):
         query = "SELECT * " \
               "FROM sensor " \
               "WHERE sensor_mac = '%s'" % (mac)
+        query = "SELECT " \
+                "sensor.sensor_id, sensor.site_id, sensor.sensor_type_id, " \
+                "sensor.sensor_mac, sensor.local_ip, sensor.date_register, sensor.date_refresh, " \
+                "sensor_type.sensor_part_number " \
+                "FROM sensor " \
+                "INNER JOIN sensor_type ON sensor.sensor_type_id = sensor_type.sensor_type_id " \
+                "WHERE sensor.sensor_mac = '%s' " % (mac)
 
         cur = self.conn.cursor()
         cur.execute(query)
-        return cur.fetchall()
+        # Get most of the info
+        s = cur.fetchall()
+        if len(s) > 0:
+            s[0] = list(s[0])
+            # Get the port_types and states
+            query = "SELECT " \
+                    "port_type.port_part_number, port.current_state " \
+                    "FROM port " \
+                    "INNER JOIN port_type ON port.port_type_id = port_type.port_type_id " \
+                    "WHERE port.sensor_id = %s " % (s[0][0])
+            cur = self.conn.cursor()
+            cur.execute(query)
+            s[0].append(list(cur.fetchall()))
 
-    def sensor_register(self, mac, ip):
+        return s
+
+    def sensor_register(self, mac, ip, sensor_type):
         '''
         Function will register a sensor to the database
         :param mac:
@@ -55,10 +76,13 @@ class mysqldb(object):
         :return:
         '''
         t = time.strftime('%Y-%m-%d %H:%M:%S')
+        # Determine the sensor_type_id based on part number
+        sensor_type_id = self.get_sensor_type_id(sensor_type)
+
         query = "INSERT INTO sensor " \
                 "(site_id, sensor_type_id, sensor_mac, local_ip, date_register) " \
                 "VALUES " \
-                "(%s, %s, '%s', '%s', '%s')" % (1, 1, mac, ip, t)
+                "(%s, %s, '%s', '%s', '%s')" % (1, sensor_type_id, mac, ip, t)
         #print query
         cur = self.conn.cursor()
         cur.execute(query)
@@ -75,36 +99,38 @@ class mysqldb(object):
         query = "UPDATE sensor " \
                 "SET " \
                 "site_id = %s, " \
-                "sensor_type_id = %s, " \
                 "local_ip = '%s' " \
                 "WHERE " \
                 "sensor_id = '%s' " \
-                % (1, 1, ip, id)
+                % (1, ip, id)
         #print query
         cur = self.conn.cursor()
         cur.execute(query)
         self.conn.commit()
         return self.get_sensor(mac)
 
-    def port_register(self, sensor_id, index, state):
+    def port_register(self, sensor_id, index, port):
         '''
 
         :param sensor_id:
         :param index:
-        :param state:
+        :param port:
         :return:
         '''
         t = time.strftime('%Y-%m-%d %H:%M:%S')
+        # Determine the port_type_id based on the part_number
+        port_type_id = self.get_port_type_id(port[0])
+
         query = "INSERT INTO port " \
-                "(sensor_id, sensor_index, current_state) " \
+                "(sensor_id, sensor_index, port_type_id, current_state) " \
                 "VALUES " \
-                "(%s, %s, '%s')" % (sensor_id, index, state)
+                "(%s, %s, %s, '%s')" % (sensor_id, index, port_type_id, port[1])
         #print query
         cur = self.conn.cursor()
         cur.execute(query)
         self.conn.commit()
 
-    def port_refresh(self, sensor_id, index, state):
+    def port_refresh(self, sensor_id, index, port):
         '''
 
         :param sensor_id:
@@ -117,14 +143,97 @@ class mysqldb(object):
                 "SET " \
                 "current_state = '%s' " \
                 "WHERE sensor_id = %s AND sensor_index = %s " \
-                % (state, sensor_id, index)
+                % (port[1], sensor_id, index)
         #print query
         cur = self.conn.cursor()
         cur.execute(query)
         self.conn.commit()
 
+    def get_sensor_type_id(self, type):
+        '''
+        Get the sensor_id for the specified part_number
+        :param type:
+        :return:
+        '''
+        query = "SELECT sensor_type_id " \
+              "FROM sensor_type " \
+              "WHERE sensor_part_number = '%s'" % (type)
 
+        cur = self.conn.cursor()
+        cur.execute(query)
+        return cur.fetchall()[0][0]
 
+    def get_port_type_id(self, type):
+        '''
+        Get the sensor_id for the specified part_number
+        :param type:
+        :return:
+        '''
+        query = "SELECT port_type_id " \
+              "FROM port_type " \
+              "WHERE port_part_number = '%s'" % (type)
+
+        cur = self.conn.cursor()
+        cur.execute(query)
+        return cur.fetchall()[0][0]
+
+    def get_desired_states(self, sensor_id):
+        '''
+
+        :param sensor_id:
+        :return:
+        '''
+        query = "SELECT sensor_index, desired_state " \
+                "FROM port " \
+                "WHERE sensor_id = %s AND desired_state IS NOT NULL" % (sensor_id)
+                #"INNER JOIN sensor ON port.sensor_id = sensor.sensor_id " \
+        #print(query)
+        cur = self.conn.cursor()
+        cur.execute(query)
+        #print cur.fetchall()
+        return cur.fetchall()
+
+    def get_current_states(self, sensor_id):
+        '''
+
+        :param sensor_id:
+        :return:
+        '''
+        query = "SELECT sensor_index, current_state " \
+                "FROM port " \
+                "WHERE sensor_id = %s" % (sensor_id)
+                #"INNER JOIN sensor ON port.sensor_id = sensor.sensor_id " \
+        #print(query)
+        cur = self.conn.cursor()
+        cur.execute(query)
+        #print cur.fetchall()
+        return cur.fetchall()
+
+    def check_state_override(self, sensor_id):
+        '''
+        Check if this sensor has had current state override set
+        :param sensor_id:
+        :return: boolean
+        '''
+        query = "SELECT state_override " \
+                "FROM sensor " \
+                "WHERE sensor_id = %s " % (sensor_id)
+        #print query
+        cur = self.conn.cursor()
+        cur.execute(query)
+        #print cur.fetchall()
+        return cur.fetchall()[0][0]
+
+    def clear_state_override(self, sensor_id):
+        query = "UPDATE sensor " \
+                "SET " \
+                "state_override = 0 " \
+                "WHERE " \
+                "sensor_id = '%s' " \
+                % (sensor_id)
+        cur = self.conn.cursor()
+        cur.execute(query)
+        self.conn.commit()
 
 
     def accountlist(self):

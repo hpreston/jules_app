@@ -1,12 +1,12 @@
 Milestones...
 
-I   Register a sensor to the database
+xI   Register a sensor to the database
     - include current state and pertinent info
 
-II  Set desired state in database and have sensor update
+xII  Set desired state in database and have sensor update
     - will include having sensor periodically polling app
 
-III Create API on sensor for on-demand state changing
+xIII Create API on sensor for on-demand state changing
 
 IV  Create Local Gateway to Display Sensors and State
 
@@ -15,7 +15,25 @@ IV  Create Local Gateway to Display Sensors and State
 Things to work out...
 todo - Figure out new sensor registration to account/site...
 
-todo    - add sensor_type and port_type into the registration functions on the app server
+done    - add sensor_type and port_type into the registration functions on the app server
         - will need to look at the functions being called from the sensor to align parameters
 
-todo - Figure out why Web Browsers aren't getting responses accurately... not cleanly closing the sessions I think...
+done - Figure out why Web Browsers aren't getting responses accurately... not cleanly closing the sessions I think...
+
+done -  Memory management
+        x use fixed CHAR[] for part_num and port_num
+        x use the free-ram to monitor
+        x move the info string output to be straight to write
+
+done -  Ethernet Module update
+        x Process the new returned values to flip
+        x part of desired state activation
+        x change the response to any request to be the json info format
+        x no more toggle or set function, basically just look for the ? and process the string
+
+done    - Wireless client crashes when app_server down
+
+done    - Wired client - DNS lookup
+
+todo    - Error checking/recovery at startup if the DB is down
+todo    - Periodic checking of the DB connection.  If it fails after starting, the app server shoud notice and do something
