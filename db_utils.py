@@ -13,7 +13,7 @@ Version = namedtuple('Version', ['major', 'minor'])
 version = Version(0,0)
 
 # Variables for the DB Conenction
-dbhost = '10.192.81.102'
+dbhost = '10.192.81.111'
 dbuser = 'jules'
 dbpassword = 'password'
 dbname = 'jules'

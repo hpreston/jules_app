@@ -36,4 +36,10 @@ done    - Wireless client crashes when app_server down
 done    - Wired client - DNS lookup
 
 todo    - Error checking/recovery at startup if the DB is down
+        - if DB found down, need to reinitialize the DB connection otherwise when it comes up, app still down
+
 todo    - Periodic checking of the DB connection.  If it fails after starting, the app server shoud notice and do something
+
+todo    - add in mDNS into the sensors for Bonjour location finding
+
+todo    - leverage milliseconds for timing rather than a counter
