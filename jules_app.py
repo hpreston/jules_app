@@ -57,7 +57,6 @@ def sensor_register(mac):
         resp = make_response("Error")
         return resp
 
-
 # Sensor Register Function
 @app.route(apiv0 + '/sensor/<mac>/register-dev')
 def sensor_register_dev(mac):
@@ -91,6 +90,9 @@ def sensor_register_dev(mac):
     except:
         resp = make_response("Error")
         return resp
+
+# Client functions here
+# todo - build inventory api call 1st
 
 if __name__ == '__main__':
     app.debug = True

@@ -6,7 +6,7 @@ __author__ = 'hapresto'
 
 from collections import namedtuple
 from time import time, mktime
-from db_utils import mysqldb
+from db_utils import mysqldb, jules_data
 from datetime import datetime, timedelta
 import json
 
@@ -14,6 +14,7 @@ Version = namedtuple('Version', ['major', 'minor'])
 version = Version(0, 0)
 
 db = mysqldb()
+data = jules_data()
 
 class Sensor(object):
     '''
@@ -137,3 +138,51 @@ class Sensor(object):
             d = db.get_current_states(self.sensor_id)
         #print d
         return d
+
+class Sensor_v2(object):
+    '''
+        New version
+        Object representing a single sensor from the system.
+    '''
+
+    def __init__(self, mac, ip=None, sensor_type=None, port_types=None, states=None, ports=None):
+        '''
+        Create a sensor object.
+        :param mac:
+        :param ip:
+        :param sensor_type:
+        :param port_types:
+        :param states:
+        :param ports:
+        :return:
+        '''
+
+        # The mac address is a required attribute
+        self.macaddress = mac
+
+        # Try to load sensor from data source
+        if (self.load()):
+            # Sensor found in DB
+            print "Loaded!"
+            pass
+        else:
+            print "Not found!"
+            # Todo - build code here to try to create a new sensor based on provided information
+            pass
+
+    def load(self):
+        '''
+        Attempt to retrieve information about this sensor from the data source
+        :return:
+        '''
+        sensor = data.sensor_load(self.macaddress)
+        if (sensor):
+            for key in sensor:
+                self.__dict__[key] = sensor[key]
+            return True
+        else:
+            return False
+
+    # Todo - add code to load the ports after the sensor details
+        # will need to get a list of port_ids and then build port objects for each
+

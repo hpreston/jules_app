@@ -324,7 +324,75 @@ class mysqldb(object):
         return cur.fetchall()
 
 
+# ToDo - 1st move to a different file
+# ToDo - 2nd move to a serparte module with indpendent API
+class jules_data(object):
+    '''
+    Database interface for working with the MySQL database backend
+    '''
 
+    def __init__(self, dbhost = dbhost, dbuser = dbuser, dbpassword = dbpassword, dbname = dbname):
+        '''
+
+        :param dbhost: Database Server to use
+        :param dbuser: User to conenct as
+        :param dbpassword: Password for user
+        :param dbname: Database name
+        :return:
+        '''
+        self.conn = cymysql.connect(host=dbhost, user=dbuser, passwd=dbpassword, db=dbname)
+
+    def sensor_load(self, macaddress):
+        '''
+        Pull relevant data from the database for a sensor with given mac address
+        :param macaddress:
+        :return:
+        '''
+
+        query = "SELECT " \
+                    "sensor.sensor_id, " \
+                    "sensor.site_id, " \
+                    "sensor.sensor_type_id, " \
+                    "sensor.sensor_mac, " \
+                    "sensor.local_ip, " \
+                    "sensor.date_register, " \
+                    "sensor.date_refresh, " \
+                    "sensor_type.sensor_part_number, " \
+                    "sensor.name, " \
+                    "sensor.description, " \
+                    "sensor.location," \
+                    "sensor.state_override " \
+                    " " \
+                "FROM sensor " \
+                "INNER JOIN sensor_type ON sensor.sensor_type_id = sensor_type.sensor_type_id " \
+                "WHERE " \
+                    "sensor.sensor_mac = '%s' " % (macaddress)
+
+        cur = self.conn.cursor()
+        cur.execute(query)
+        # Get most of the info
+        sensor_list = cur.fetchall()
+
+        if len(sensor_list) > 0:
+            # Build a dictionary of relevant details
+            sensor = {
+                        "id": sensor_list[0][0],
+                        "site_id": sensor_list[0][1],
+                        "sensor_type_id": sensor_list[0][2],
+                        "sensor_mac": sensor_list[0][3],
+                        "local_ip": sensor_list[0][4],
+                        "date_register": sensor_list[0][5],
+                        "date_refresh": sensor_list[0][6],
+                        "sensor_part_number": sensor_list[0][7],
+                        "name": sensor_list[0][8],
+                        "description": sensor_list[0][9],
+                        "location": sensor_list[0][10],
+                        "state_override": sensor_list[0][11]
+                      }
+            return sensor
+        else:
+            # No sensor found
+            return False
 
 
 
