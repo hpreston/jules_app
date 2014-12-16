@@ -342,7 +342,7 @@ class jules_data(object):
         '''
         self.conn = cymysql.connect(host=dbhost, user=dbuser, passwd=dbpassword, db=dbname)
 
-    def sensor_load(self, macaddress):
+    def sensor_load(self, macaddress, id = None):
         '''
         Pull relevant data from the database for a sensor with given mac address
         :param macaddress:
@@ -366,7 +366,8 @@ class jules_data(object):
                 "FROM sensor " \
                 "INNER JOIN sensor_type ON sensor.sensor_type_id = sensor_type.sensor_type_id " \
                 "WHERE " \
-                    "sensor.sensor_mac = '%s' " % (macaddress)
+                    "sensor.sensor_mac = '%s' OR " \
+                    "sensor.sensor_id = %s " % (macaddress, id)
 
         cur = self.conn.cursor()
         cur.execute(query)
@@ -394,5 +395,111 @@ class jules_data(object):
             # No sensor found
             return False
 
+    def sensor_port_list(self, sensor_id):
+        '''
+        Get the list of port_ids for all ports registered with this sensor_id
+        :param sensor_id:
+        :return:
+        '''
 
+        query = "SELECT " \
+                "port.port_id " \
+                "FROM port " \
+                "WHERE " \
+                "port.sensor_id = %s " % (sensor_id)
 
+        cur = self.conn.cursor()
+        cur.execute(query)
+        port_list = cur.fetchall()
+        return [port[0] for port in port_list]
+
+    def port_load(self, port_id):
+        '''
+        Pull relevant data from the database for a port with given port_id
+        :param macaddress:
+        :return:
+        '''
+
+        query = "SELECT " \
+                    "port.port_id, " \
+                    "port.sensor_index, " \
+                    "port_type.port_part_number, " \
+                    "port.current_state, " \
+                    "port.desired_state, " \
+                    "port.name, " \
+                    "port.description " \
+                    " " \
+                "FROM port " \
+                "INNER JOIN port_type ON port.port_type_id = port_type.port_type_id " \
+                "WHERE " \
+                    "port.port_id = %s " \
+                "ORDER BY port.sensor_index " % (port_id)
+
+        cur = self.conn.cursor()
+        cur.execute(query)
+        # Get most of the info
+        port_list = cur.fetchall()
+
+        if len(port_list) > 0:
+            # Build a dictionary of relevant details
+            port = {
+                        "id" : port_list[0][0],
+                        "sensor_index" : port_list[0][1],
+                        "part_number" : port_list[0][2],
+                        "current_state" : port_list[0][3],
+                        "desired_state" : port_list[0][4],
+                        "name" : port_list[0][5],
+                        "description" : port_list[0][6]
+                      }
+            # print port
+            return port
+        else:
+            # No sensor found
+            return False
+
+    def site_load(self, site_id):
+        '''
+        Pull relevant data from the database for a site with given site_id
+        :param site_id:
+        :return:
+        '''
+        query = "SELECT " \
+                    "site.site_id, " \
+                    "site.site_name " \
+                    " " \
+                "FROM site " \
+                "WHERE " \
+                    "site.site_id = %s " % (site_id)
+
+        cur = self.conn.cursor()
+        cur.execute(query)
+        # Get most of the info
+        site_list = cur.fetchall()
+
+        if len(site_list) > 0:
+            # Build a dictionary of relevant details
+            site = {
+                        "id" : site_list[0][0],
+                        "name" : site_list[0][1]
+                      }
+            return site
+        else:
+            return False
+
+    def site_sensor_list(self, site_id):
+        '''
+        Get the list of sensor_ids for all sensors registered with this site_id
+        :param site_id:
+        :return:
+        '''
+
+        query = "SELECT " \
+                "sensor.sensor_id " \
+                "FROM sensor " \
+                "WHERE " \
+                "sensor.site_id = %s " % (site_id)
+
+        cur = self.conn.cursor()
+        cur.execute(query)
+        sensor_list = cur.fetchall()
+        return [sensor[0] for sensor in sensor_list]

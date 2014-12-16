@@ -50,3 +50,4 @@ in process
 todo    - data seems to be saved in the database connection so if something changes outside of the python program it doesnt' learn
         - example... change the state_override value on a sensor and then try to sensor.load() again, it doesn't get new value
 
+todo    - recall how to make something iterable... Sensor, Port and Site all need to become iterable

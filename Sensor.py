@@ -9,6 +9,7 @@ from time import time, mktime
 from db_utils import mysqldb, jules_data
 from datetime import datetime, timedelta
 import json
+from Port import Port
 
 Version = namedtuple('Version', ['major', 'minor'])
 version = Version(0, 0)
@@ -145,7 +146,7 @@ class Sensor_v2(object):
         Object representing a single sensor from the system.
     '''
 
-    def __init__(self, mac, ip=None, sensor_type=None, port_types=None, states=None, ports=None):
+    def __init__(self, mac = None, id = None, ip=None, sensor_type=None, port_types=None, states=None, ports=None):
         '''
         Create a sensor object.
         :param mac:
@@ -159,14 +160,15 @@ class Sensor_v2(object):
 
         # The mac address is a required attribute
         self.macaddress = mac
+        self.id = id
 
         # Try to load sensor from data source
         if (self.load()):
             # Sensor found in DB
-            print "Loaded!"
+            # print "Loaded!"
             pass
         else:
-            print "Not found!"
+            # print "Not found!"
             # Todo - build code here to try to create a new sensor based on provided information
             pass
 
@@ -175,14 +177,43 @@ class Sensor_v2(object):
         Attempt to retrieve information about this sensor from the data source
         :return:
         '''
-        sensor = data.sensor_load(self.macaddress)
+        sensor = data.sensor_load(self.macaddress, self.id)
         if (sensor):
             for key in sensor:
                 self.__dict__[key] = sensor[key]
+            self._get_port_list()
             return True
         else:
             return False
 
     # Todo - add code to load the ports after the sensor details
         # will need to get a list of port_ids and then build port objects for each
+
+    def _get_port_list(self):
+        '''
+        Get the list of ports, if any that this sensor has registered with the database
+        :return:
+        '''
+        port_list = data.sensor_port_list(self.id)
+        if (len(port_list) > 0):
+            self.ports = []
+            for port_id in port_list:
+                #self.ports.append(data.port_load(port))
+                port = Port(port_id)
+                self.ports.append(port)
+            return True
+        else:
+            return False
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def __repr__(self):
+        return self.__dict__.__repr__()
+
+    def __getitem__(self, key):
+        return self.__dict__[key]
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
 

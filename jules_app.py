@@ -12,6 +12,7 @@ __author__ = 'hpreston'
 from collections import namedtuple
 from flask import Flask, make_response, request, jsonify, url_for
 from Sensor import Sensor
+from Site import Site
 
 Version = namedtuple('Version', ['major', 'minor'])
 version = Version(0, 0)
@@ -93,6 +94,25 @@ def sensor_register_dev(mac):
 
 # Client functions here
 # todo - build inventory api call 1st
+# Pull a Site Inventory Report
+@app.route(apiv0 + '/site/<site_id>/inventory')
+def site_inventory(site_id):
+    '''
+    API call to retrieve an inventory of sensors and ports for a specified site_id
+    :param site_id:
+    :return:
+    '''
+    try:
+        site = Site(site_id = site_id)
+        print site
+        # todo - need to make thsi work with json.dumps or jsonify - without it the data like date/time isn't working
+        resp = make_response(str(site.__dict__) + "\n")
+        resp.headers['Content-Type'] = 'application/json'
+        return resp
+    except:
+        resp = make_response("Error")
+        return resp
+    pass
 
 if __name__ == '__main__':
     app.debug = True

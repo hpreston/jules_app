@@ -29,25 +29,33 @@ class Port(object):
         # Try to load port from data source
         if (self.load()):
             # Found in DB
-            print "Loaded!"
+            # print "Loaded!"
             pass
         else:
-            print "Not found!"
+            # print "Not found!"
             pass
 
     def load(self):
         '''
-        Attempt to retrieve information about this portfrom the data source
+        Attempt to retrieve information about this port from the data source
         :return:
         '''
+        port = data.port_load(self.port_id)
+        if (port):
+            for key in port:
+                self.__dict__[key] = port[key]
+            return True
+        else:
+            return False
 
-        # Sample from Sensor
-        # sensor = data.sensor_load(self.macaddress)
-        # if (sensor):
-        #     for key in sensor:
-        #         self.__dict__[key] = sensor[key]
-        #     return True
-        # else:
-        #     return False
+    def __str__(self):
+        return str(self.__dict__)
 
-        pass
+    def __repr__(self):
+        return self.__dict__.__repr__()
+
+    def __getitem__(self, key):
+        return self.__dict__[key]
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
